@@ -1,0 +1,77 @@
+channels:
+  blog:
+    name: "Blog (Public)"
+    description: "Long structured post"
+    max_length: 3000
+  diary:
+    name: "Diary (Personal)"
+    description: "Reflection, personal tone"
+    max_length: 2000
+  tg_personal:
+    name: "Telegram Personal"
+    description: "Informal, for close contacts"
+    max_length: 1000
+  tg_public:
+    name: "Telegram Public"
+    description: "Informative, for audience"
+    max_length: 1500
+  twitter:
+    name: "Twitter/X"
+    description: "Short, concise"
+    max_length: 280
+
+styles:
+  - concise
+  - detailed
+  - structured
+  - plan
+  - advisory
+  - casual
+  - funny
+  - serious
+
+lengths:
+  brief:
+    name: "Brief"
+    description: "1-2 sentences, very concise"
+  short:
+    name: "Short"
+    description: "3-5 sentences, one short paragraph"
+  medium:
+    name: "Medium"
+    description: "1-2 paragraphs, balanced"
+  detailed:
+    name: "Detailed"
+    description: "2-3 paragraphs, thorough"
+  full:
+    name: "Full"
+    description: "Comprehensive, use the full max_length of the channel"
+
+languages:
+  ru:
+    name: "Russian"
+    default: true
+  en:
+    name: "English"
+  de:
+    name: "German"
+  hy:
+    name: "Armenian"
+
+limits:
+  max_text_per_item: 4000
+  max_images_per_day: 10
+  max_image_size_mb: 5
+  max_urls_per_day: 10
+
+ai:
+  provider: openai
+  model: gpt-5.1
+  temperature: 0.8
+  max_tokens: 4096
+  timeout_seconds: 60
+  retries: 3
+
+rate_limits:
+  ai_generations_per_day: 10
+  api_requests_per_minute: 120

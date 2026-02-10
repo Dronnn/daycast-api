@@ -1,0 +1,32 @@
+# DayCast — Caddy reverse proxy
+# Serves: web static files + API reverse proxy
+#
+# For local network: :80
+# For Cloudflare Tunnel: replace :80 with your domain (e.g. daycast.example.com)
+
+:80 {
+	# API — proxy to uvicorn
+	handle /api/* {
+		reverse_proxy localhost:8000
+	}
+
+	# Uploaded files — proxy to API
+	handle /api/v1/uploads/* {
+		reverse_proxy localhost:8000
+	}
+
+	# Web — static files
+	handle {
+		root * /Users/andrewmaier/daycast/web-dist
+		try_files {path} /index.html
+		file_server
+	}
+
+	# Logging
+	log {
+		output file /Users/andrewmaier/daycast/logs/caddy-access.log {
+			roll_size 10mb
+			roll_keep 5
+		}
+	}
+}

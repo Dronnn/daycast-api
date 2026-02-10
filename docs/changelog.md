@@ -1,0 +1,66 @@
+# Changelog
+
+## Step 7 — Full Feature Set (2026-02-10)
+
+- **Length control**: added `default_length` to channel settings (migration 005). 5 options: brief, short, medium, detailed, full. Length passed to AI prompt. New endpoint `GET /lengths`. UI selector in Channels page.
+- Updated `product.yml` — added `lengths` section.
+- Updated `generate_v1.md` — AI prompt now includes length instructions.
+- Copy button fix on Generate page (HTTP fallback via `document.execCommand`).
+
+## Step 6 — Soft-Delete, Edit History, Copy Fix (2026-02-10)
+
+- **Soft-delete for individual messages**: `DELETE /inputs/{id}` sets `cleared=True` instead of removing from DB. Deleted items visible in History with "Deleted" badge.
+- **Filtered generation**: `POST /generate` and regenerate endpoints filter out `cleared=True` items — deleted/cleared items don't go to AI.
+- **Edit history**: new `input_item_edits` table (migration 004). `PUT /inputs/{id}` saves old content before updating. History detail shows edit history per item.
+- **Copy button fix**: added `document.execCommand('copy')` fallback for HTTP (non-HTTPS) contexts. Copy works on all pages.
+- Badges in History: "Deleted" for soft-deleted, "Edited" for modified items, "Show edit history" button.
+
+## Step 5 — Soft-Delete, History, Channels (2026-02-10)
+
+- **OPENAI_API_KEY** configured on production Mac.
+- **AI model**: changed from `gpt-5.2` to `gpt-5.1` (5.2 not available).
+- **API parameter**: `max_tokens` → `max_completion_tokens` (gpt-5.1 format).
+- **Single client_id**: all devices use fixed UUID `00000000-0000-4000-a000-000000000001`. Changed `app/dependencies.py`. Existing data migrated.
+- **Soft-delete for Clear Day**: added `cleared` field to `input_items` (migration 003). Clear day sets `cleared=True`. Feed shows only non-cleared. History shows everything.
+- **History page**: rewritten — loads real data from `GET /days`, search works.
+- **History detail page**: new route `/history/:date` — shows all items (with "Cleared" badge) and all generations with Copy.
+- **Channels page**: rewritten — loads/saves settings via API, Save button, controlled state.
+
+## Steps 2–4 — CRUD, Images, URLs, AI Generation (2026-02-09 – 2026-02-10)
+
+- SQLAlchemy models: `clients`, `input_items`, `generations`, `generation_results`, `channel_settings`.
+- Alembic migrations 001–002.
+- Full CRUD for input items (text, URL, image).
+- Image upload to disk (`data/uploads/`), served via `/api/v1/uploads/`.
+- URL text extraction via trafilatura (stored in `extracted_text` field).
+- AI generation module (`app/services/ai.py`): collects day's inputs, builds prompt, calls OpenAI, parses JSON response, retries on failure.
+- Prompt templates: `generate_v1.md`, `regenerate_v1.md`.
+- Regenerate endpoint (per-channel or all).
+- Days endpoints: list, detail, delete.
+- Catalog endpoints: channels, styles, languages.
+- Channel settings endpoints: get/save.
+- Unified error handling (`ErrorResponse`).
+- Rate limiting (10 AI/day, 120 req/min).
+- Tests with pytest.
+
+## Step 1 — Backend Skeleton (2026-02-09)
+
+- Project structure created (`app/`, `tests/`, `config/`, `docs/`, `prompts/`, `infra/`)
+- FastAPI app with CORS middleware
+- Health endpoint: `GET /api/v1/health`
+- SQLAlchemy async engine + session factory
+- Alembic configured for async PostgreSQL migrations
+- Docker Compose for PostgreSQL 15
+- Product config (`config/product.yml`): channels, styles, languages, limits
+- Makefile with `dev`, `test`, `lint`, `migrate` targets
+- pytest test for health endpoint
+
+## Infrastructure (2026-02-10)
+
+- `infra/Caddyfile` — reverse proxy config
+- `infra/launchd/` — plist files for API, Caddy, backup auto-start
+- `infra/backup/backup.sh` — pg_dump + 7-day rotation
+- `scripts/setup-mac.sh` — first-time Mac setup
+- `scripts/deploy.sh` — deploy via rsync + SSH
+- `docs/deploy.md` — deployment documentation
+- Makefile `deploy-mac` target

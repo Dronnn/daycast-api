@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: daycast-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: daycast
+      POSTGRES_PASSWORD: daycast
+      POSTGRES_DB: daycast
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

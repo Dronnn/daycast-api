@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.errors import AppError, app_error_handler, http_exception_handler
-from app.routers import catalog, days, generate, health, inputs, settings, uploads
+from app.routers import auth, catalog, days, generate, health, inputs, settings, uploads
 
 app = FastAPI(title="DayCast API", version="0.1.0")
 
@@ -23,6 +23,7 @@ app.add_exception_handler(AppError, app_error_handler)
 app.add_exception_handler(HTTPException, http_exception_handler)
 
 app.include_router(health.router, prefix="/api/v1")
+app.include_router(auth.router, prefix="/api/v1")
 app.include_router(inputs.router, prefix="/api/v1")
 app.include_router(uploads.router, prefix="/api/v1")
 app.include_router(generate.router, prefix="/api/v1")

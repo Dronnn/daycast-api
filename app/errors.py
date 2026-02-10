@@ -21,6 +21,7 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
         400: "validation_error",
         401: "unauthorized",
         404: "not_found",
+        409: "conflict",
         413: "payload_too_large",
         422: "validation_error",
         429: "rate_limited",

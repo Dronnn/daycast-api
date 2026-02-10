@@ -1,4 +1,6 @@
+import base64
 import json
+import mimetypes
 import time
 from pathlib import Path
 
@@ -6,6 +8,7 @@ import httpx
 import structlog
 
 from app.config import settings
+from app.services.file_storage import UPLOAD_DIR
 from app.services.product_config import get_ai_config, get_channels, get_lengths
 
 logger = structlog.get_logger()
@@ -15,6 +18,20 @@ PROMPT_TEMPLATE = (PROJECT_ROOT / "prompts" / "generate_v1.md").read_text()
 REGENERATE_TEMPLATE = (PROJECT_ROOT / "prompts" / "regenerate_v1.md").read_text()
 
 OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions"
+
+
+def _image_to_data_url(relative_path: str) -> str | None:
+    """Read image from disk and return as base64 data URL for OpenAI vision."""
+    file_path = UPLOAD_DIR / relative_path
+    if not file_path.exists():
+        logger.warning("image_not_found", path=str(file_path))
+        return None
+    mime, _ = mimetypes.guess_type(file_path.name)
+    if not mime:
+        mime = "image/jpeg"
+    data = file_path.read_bytes()
+    b64 = base64.b64encode(data).decode()
+    return f"data:{mime};base64,{b64}"
 
 
 def _build_items_block(items: list[dict]) -> str:
@@ -71,16 +88,18 @@ def _build_messages(
         "{channels_block}", channels_block
     )
 
-    # Build content parts — text + any images
+    # Build content parts — text + any images (as base64 data URLs)
     content_parts: list[dict] = [{"type": "text", "text": prompt_text}]
     for item in items:
         if item["type"] == "image":
-            content_parts.append(
-                {
-                    "type": "image_url",
-                    "image_url": {"url": item["content"], "detail": "low"},
-                }
-            )
+            data_url = _image_to_data_url(item["content"])
+            if data_url:
+                content_parts.append(
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": data_url, "detail": "low"},
+                    }
+                )
 
     return [{"role": "user", "content": content_parts}]
 
@@ -197,12 +216,14 @@ async def regenerate(
     content_parts: list[dict] = [{"type": "text", "text": prompt_text}]
     for item in items:
         if item["type"] == "image":
-            content_parts.append(
-                {
-                    "type": "image_url",
-                    "image_url": {"url": item["content"], "detail": "low"},
-                }
-            )
+            data_url = _image_to_data_url(item["content"])
+            if data_url:
+                content_parts.append(
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": data_url, "detail": "low"},
+                    }
+                )
 
     messages = [{"role": "user", "content": content_parts}]
 

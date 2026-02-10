@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.errors import AppError, app_error_handler, http_exception_handler
-from app.routers import auth, catalog, days, generate, health, inputs, settings, uploads
+from app.routers import auth, catalog, days, generate, health, inputs, public, publish, settings, uploads
 
 app = FastAPI(title="DayCast API", version="0.1.0")
 
@@ -30,6 +30,8 @@ app.include_router(generate.router, prefix="/api/v1")
 app.include_router(days.router, prefix="/api/v1")
 app.include_router(catalog.router, prefix="/api/v1")
 app.include_router(settings.router, prefix="/api/v1")
+app.include_router(publish.router, prefix="/api/v1")
+app.include_router(public.router, prefix="/api/v1")
 
 # Serve static web files (replaces Caddy on Big Sur)
 WEB_DIST = Path(os.environ.get("WEB_DIST_DIR", Path.home() / "daycast" / "web-dist"))

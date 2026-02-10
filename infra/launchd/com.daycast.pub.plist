@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.daycast.pub</string>
+
+	<key>ProgramArguments</key>
+	<array>
+		<string>/usr/local/bin/node</string>
+		<string>/usr/local/lib/node_modules/serve/build/main.js</string>
+		<string>/Users/andrewmaier/daycast/pub-dist</string>
+		<string>-l</string>
+		<string>3000</string>
+		<string>-s</string>
+	</array>
+
+	<key>RunAtLoad</key>
+	<true/>
+
+	<key>KeepAlive</key>
+	<true/>
+
+	<key>StandardOutPath</key>
+	<string>/Users/andrewmaier/daycast/logs/pub-stdout.log</string>
+
+	<key>StandardErrorPath</key>
+	<string>/Users/andrewmaier/daycast/logs/pub-stderr.log</string>
+</dict>
+</plist>

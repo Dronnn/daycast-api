@@ -12,6 +12,7 @@
   - `GET /public/stats` — total posts, total days, channels used.
   - `GET /public/rss` — RSS 2.0 XML feed (last 50 posts).
 - **Archive fix**: fixed `get_archive` query — use `select_from(PublishedPost)` to fix missing FROM clause, generate month labels via Python `calendar` module instead of PostgreSQL `to_char(Month)`.
+- **Image generation fix**: images were sent to OpenAI as relative file paths, causing `AI provider error`. Now reads image files from disk, encodes as base64 data URLs (`data:image/jpeg;base64,...`) before sending to OpenAI Vision API.
 - Deployed: migration 007 applied, API restarted.
 
 ## Step 8 — User Authentication (2026-02-10)

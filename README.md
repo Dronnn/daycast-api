@@ -17,6 +17,8 @@ Built with Python 3.12, FastAPI, SQLAlchemy 2.0, and PostgreSQL.
 - **Edit history** — old versions preserved on edit, viewable in history.
 - **Rate limiting** — 10 AI generations/day, 120 API requests/min.
 - **User authentication** — register/login with username + password. Passwords hashed with bcrypt. JWT tokens (30-day expiry) sent as `Authorization: Bearer`. Each user sees only their own data.
+- **Publishing** — publish any generated result to the public blog. Slug-based URLs. Unpublish at any time. Batch status check for UI.
+- **Public API** — unauthenticated endpoints for the public blog site: post feed with cursor pagination and filters, single post by slug, calendar heatmap, monthly archive, site stats, RSS feed.
 - **Static web serving** — serves the built React SPA alongside the API.
 
 ## API Endpoints
@@ -44,6 +46,15 @@ Built with Python 3.12, FastAPI, SQLAlchemy 2.0, and PostgreSQL.
 | `GET` | `/api/v1/lengths` | List available lengths |
 | `GET` | `/api/v1/settings/channels` | Get channel settings |
 | `POST` | `/api/v1/settings/channels` | Save channel settings |
+| `POST` | `/api/v1/publish` | Publish a generation result |
+| `DELETE` | `/api/v1/publish/{id}` | Unpublish a post |
+| `GET` | `/api/v1/publish/status` | Batch check publish status |
+| `GET` | `/api/v1/public/posts` | Public post feed (cursor, channel, language, date filters) |
+| `GET` | `/api/v1/public/posts/{slug}` | Single public post by slug |
+| `GET` | `/api/v1/public/calendar` | Calendar heatmap (year, month) |
+| `GET` | `/api/v1/public/archive` | Monthly archive with post counts |
+| `GET` | `/api/v1/public/stats` | Site statistics |
+| `GET` | `/api/v1/public/rss` | RSS 2.0 feed |
 
 ## Tech Stack
 
@@ -71,7 +82,7 @@ daycast-api/
 │   ├── schemas/             # Pydantic request/response DTOs
 │   ├── routers/             # API endpoint handlers
 │   └── services/            # Business logic (AI, URL extraction, file storage)
-├── alembic/                 # Database migrations (001–006)
+├── alembic/                 # Database migrations (001–007)
 ├── config/product.yml       # Channels, styles, languages, lengths, limits, AI config
 ├── prompts/                 # AI prompt templates (generate, regenerate)
 ├── infra/                   # Caddyfile, launchd plists, backup scripts
@@ -86,13 +97,14 @@ daycast-api/
 
 ## Database Schema
 
-6 migrations applied:
+7 migrations applied:
 1. **001** — Initial schema: `clients`, `input_items`, `generations`, `generation_results`, `channel_settings`
 2. **002** — Add `extracted_text` to `input_items` (for URL content)
 3. **003** — Add `cleared` flag to `input_items` (soft-delete)
 4. **004** — Add `input_item_edits` table (edit history)
 5. **005** — Add `default_length` to `channel_settings`
 6. **006** — Add `users` table (authentication)
+7. **007** — Add `published_posts` table (publishing)
 
 ## Setup (Local Development)
 

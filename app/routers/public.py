@@ -153,23 +153,26 @@ async def get_calendar(
 async def get_archive(
     session: AsyncSession = Depends(get_session),
 ):
+    month_key = func.to_char(Generation.date, "YYYY-MM")
     result = await session.execute(
         select(
-            func.to_char(Generation.date, "YYYY-MM").label("month_key"),
-            func.to_char(Generation.date, "Month YYYY").label("month_label"),
+            month_key.label("month_key"),
             func.count(PublishedPost.id).label("cnt"),
         )
+        .select_from(PublishedPost)
         .join(GenerationResult, PublishedPost.generation_result_id == GenerationResult.id)
         .join(Generation, GenerationResult.generation_id == Generation.id)
-        .group_by("month_key", "month_label")
-        .order_by(func.to_char(Generation.date, "YYYY-MM").desc())
+        .group_by(month_key)
+        .order_by(month_key.desc())
     )
     rows = result.all()
 
-    months = [
-        ArchiveMonth(month=row[0], label=row[1].strip(), post_count=row[2])
-        for row in rows
-    ]
+    import calendar as cal
+    months = []
+    for row in rows:
+        year, mon = row[0].split("-")
+        label = f"{cal.month_name[int(mon)]} {year}"
+        months.append(ArchiveMonth(month=row[0], label=label, post_count=row[1]))
     return ArchiveResponse(months=months)
 
 

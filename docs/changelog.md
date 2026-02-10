@@ -1,5 +1,19 @@
 # Changelog
 
+## Step 9 — Publishing & Public API (2026-02-10)
+
+- **Published posts model**: `published_posts` table (id UUID, generation_result_id FK, client_id FK, slug UNIQUE, published_at). Migration 007 with DESC index on `published_at`.
+- **Publish router** (`app/routers/publish.py`): `POST /publish` (publish a result, generates slug), `DELETE /publish/{id}` (unpublish), `GET /publish/status?result_ids=...` (batch status check).
+- **Public router** (`app/routers/public.py`): unauthenticated endpoints for the public blog site:
+  - `GET /public/posts` — cursor-paginated feed with channel, language, date filters.
+  - `GET /public/posts/{slug}` — single post by slug with input previews.
+  - `GET /public/calendar?year=&month=` — calendar heatmap (dates with post counts).
+  - `GET /public/archive` — monthly archive with post counts and labels.
+  - `GET /public/stats` — total posts, total days, channels used.
+  - `GET /public/rss` — RSS 2.0 XML feed (last 50 posts).
+- **Archive fix**: fixed `get_archive` query — use `select_from(PublishedPost)` to fix missing FROM clause, generate month labels via Python `calendar` module instead of PostgreSQL `to_char(Month)`.
+- Deployed: migration 007 applied, API restarted.
+
 ## Step 8 — User Authentication (2026-02-10)
 
 - **User model**: `users` table (id UUID PK, username UNIQUE, password_hash, created_at). Migration 006.

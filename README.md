@@ -16,6 +16,7 @@ Built with Python 3.12, FastAPI, SQLAlchemy 2.0, and PostgreSQL.
 - **Soft-delete** — deleted/cleared items stay in history, not sent to AI.
 - **Edit history** — old versions preserved on edit, viewable in history.
 - **Rate limiting** — 10 AI generations/day, 120 API requests/min.
+- **User authentication** — register/login with username + password. Passwords hashed with bcrypt. JWT tokens (30-day expiry) sent as `Authorization: Bearer`. Each user sees only their own data.
 - **Static web serving** — serves the built React SPA alongside the API.
 
 ## API Endpoints
@@ -23,6 +24,8 @@ Built with Python 3.12, FastAPI, SQLAlchemy 2.0, and PostgreSQL.
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/api/v1/health` | Health check |
+| `POST` | `/api/v1/auth/register` | Register (username + password → JWT) |
+| `POST` | `/api/v1/auth/login` | Login (username + password → JWT) |
 | `POST` | `/api/v1/inputs` | Add input item (text/url/image) |
 | `GET` | `/api/v1/inputs?date=YYYY-MM-DD` | List items for a date |
 | `GET` | `/api/v1/inputs/{id}` | Get single item |
@@ -49,6 +52,8 @@ Built with Python 3.12, FastAPI, SQLAlchemy 2.0, and PostgreSQL.
 - **PostgreSQL 16** (via Homebrew on production Mac)
 - **OpenAI GPT-5.1** for content generation
 - **trafilatura** for URL text extraction
+- **bcrypt** for password hashing
+- **PyJWT** for JWT token creation/verification
 - **structlog** for structured JSON logging
 
 ## Project Structure
@@ -66,7 +71,7 @@ daycast-api/
 │   ├── schemas/             # Pydantic request/response DTOs
 │   ├── routers/             # API endpoint handlers
 │   └── services/            # Business logic (AI, URL extraction, file storage)
-├── alembic/                 # Database migrations (001–005)
+├── alembic/                 # Database migrations (001–006)
 ├── config/product.yml       # Channels, styles, languages, lengths, limits, AI config
 ├── prompts/                 # AI prompt templates (generate, regenerate)
 ├── infra/                   # Caddyfile, launchd plists, backup scripts
@@ -81,12 +86,13 @@ daycast-api/
 
 ## Database Schema
 
-5 migrations applied:
+6 migrations applied:
 1. **001** — Initial schema: `clients`, `input_items`, `generations`, `generation_results`, `channel_settings`
 2. **002** — Add `extracted_text` to `input_items` (for URL content)
 3. **003** — Add `cleared` flag to `input_items` (soft-delete)
 4. **004** — Add `input_item_edits` table (edit history)
 5. **005** — Add `default_length` to `channel_settings`
+6. **006** — Add `users` table (authentication)
 
 ## Setup (Local Development)
 
@@ -141,7 +147,8 @@ The production Mac (192.168.31.131) runs everything natively — no Docker:
 |----------|-------------|---------|
 | `DATABASE_URL` | PostgreSQL connection string | `postgresql+asyncpg://daycast:daycast@localhost:5432/daycast` |
 | `OPENAI_API_KEY` | OpenAI API key (required for generation) | — |
-| `AUTH_MODE` | Authentication mode | `none` |
+| `JWT_SECRET` | Secret key for JWT signing (required) | `change-me-in-production` |
+| `AUTH_MODE` | Authentication mode (legacy, unused) | `none` |
 
 ## License
 

@@ -1,5 +1,17 @@
 # Changelog
 
+## Step 8 — User Authentication (2026-02-10)
+
+- **User model**: `users` table (id UUID PK, username UNIQUE, password_hash, created_at). Migration 006.
+- **Auth service** (`app/services/auth.py`): bcrypt password hashing, JWT creation/verification (HS256, 30-day expiry).
+- **Auth endpoints**: `POST /api/v1/auth/register` (creates user + client, returns JWT), `POST /api/v1/auth/login` (validates credentials, returns JWT).
+- **Protected endpoints**: `app/dependencies.py` rewritten — extracts `user_id` from JWT `Authorization: Bearer` header, uses as `client_id`. All existing endpoints unchanged. No token → 401.
+- **Health endpoint** remains public (no auth required).
+- **Dependencies**: added `bcrypt>=4.0`, `pyjwt>=2.8` to `pyproject.toml`.
+- **Config**: added `JWT_SECRET` setting to `app/config.py` and `.env.example`.
+- **Error handling**: added 409 (conflict) code for duplicate username registration.
+- Deployed on production Mac: `pip install bcrypt pyjwt`, `JWT_SECRET` set in `.env`, migration 006 applied, API restarted.
+
 ## Step 7 — Full Feature Set (2026-02-10)
 
 - **Length control**: added `default_length` to channel settings (migration 005). 5 options: brief, short, medium, detailed, full. Length passed to AI prompt. New endpoint `GET /lengths`. UI selector in Channels page.

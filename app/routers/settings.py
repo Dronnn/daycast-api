@@ -7,9 +7,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_session
 from app.dependencies import get_client_id
 from app.models.channel_setting import ChannelSetting
+from app.models.generation_settings import GenerationSettings
 from app.schemas.settings import (
     ChannelSettingResponse,
     ChannelSettingsRequest,
+)
+from app.schemas.generation_settings import (
+    GenerationSettingsRequest,
+    GenerationSettingsResponse,
 )
 
 router = APIRouter(prefix="/settings", tags=["settings"])
@@ -63,3 +68,42 @@ async def save_channel_settings(
         select(ChannelSetting).where(ChannelSetting.client_id == client_id)
     )
     return result.scalars().all()
+
+
+@router.get("/generation", response_model=GenerationSettingsResponse)
+async def get_generation_settings(
+    client_id: uuid.UUID = Depends(get_client_id),
+    session: AsyncSession = Depends(get_session),
+):
+    result = await session.execute(
+        select(GenerationSettings).where(GenerationSettings.client_id == client_id)
+    )
+    settings = result.scalar_one_or_none()
+    if settings is None:
+        return GenerationSettingsResponse()
+    return settings
+
+
+@router.post("/generation", response_model=GenerationSettingsResponse)
+async def save_generation_settings(
+    body: GenerationSettingsRequest,
+    client_id: uuid.UUID = Depends(get_client_id),
+    session: AsyncSession = Depends(get_session),
+):
+    result = await session.execute(
+        select(GenerationSettings).where(GenerationSettings.client_id == client_id)
+    )
+    settings = result.scalar_one_or_none()
+    if settings is None:
+        settings = GenerationSettings(
+            client_id=client_id,
+            custom_instruction=body.custom_instruction,
+            separate_business_personal=body.separate_business_personal,
+        )
+        session.add(settings)
+    else:
+        settings.custom_instruction = body.custom_instruction
+        settings.separate_business_personal = body.separate_business_personal
+    await session.commit()
+    await session.refresh(settings)
+    return settings

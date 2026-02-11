@@ -26,33 +26,52 @@ router = APIRouter(prefix="/public", tags=["public"])
 
 async def _build_post_response(
     post: PublishedPost,
-    result: GenerationResult,
-    generation: Generation,
+    result: GenerationResult | None,
+    generation: Generation | None,
     session: AsyncSession,
 ) -> PublishedPostResponse:
-    items_result = await session.execute(
-        select(InputItem)
-        .where(
-            InputItem.client_id == generation.client_id,
-            InputItem.date == generation.date,
-            InputItem.cleared == False,
+    # Input-based post
+    if post.input_item_id and result is None:
+        return PublishedPostResponse(
+            id=post.id,
+            slug=post.slug,
+            channel_id=None,
+            style=None,
+            language=None,
+            text=post.text or "",
+            date=post.published_at.date(),
+            published_at=post.published_at,
+            input_items_preview=[],
+            source="input",
         )
-        .order_by(InputItem.created_at)
-        .limit(5)
-    )
-    items = items_result.scalars().all()
-    preview = [item.content[:80] for item in items]
+
+    # Generation-based post
+    preview = []
+    if generation:
+        items_result = await session.execute(
+            select(InputItem)
+            .where(
+                InputItem.client_id == generation.client_id,
+                InputItem.date == generation.date,
+                InputItem.cleared == False,
+            )
+            .order_by(InputItem.created_at)
+            .limit(5)
+        )
+        items = items_result.scalars().all()
+        preview = [item.content[:80] for item in items]
 
     return PublishedPostResponse(
         id=post.id,
         slug=post.slug,
-        channel_id=result.channel_id,
-        style=result.style,
-        language=result.language,
-        text=result.text,
-        date=generation.date,
+        channel_id=result.channel_id if result else None,
+        style=result.style if result else None,
+        language=result.language if result else None,
+        text=result.text if result else (post.text or ""),
+        date=generation.date if generation else post.published_at.date(),
         published_at=post.published_at,
         input_items_preview=preview,
+        source="generation" if result else "input",
     )
 
 
@@ -67,8 +86,8 @@ async def list_posts(
 ):
     query = (
         select(PublishedPost, GenerationResult, Generation)
-        .join(GenerationResult, PublishedPost.generation_result_id == GenerationResult.id)
-        .join(Generation, GenerationResult.generation_id == Generation.id)
+        .outerjoin(GenerationResult, PublishedPost.generation_result_id == GenerationResult.id)
+        .outerjoin(Generation, GenerationResult.generation_id == Generation.id)
     )
 
     if cursor:
@@ -111,8 +130,8 @@ async def get_post(
 ):
     result = await session.execute(
         select(PublishedPost, GenerationResult, Generation)
-        .join(GenerationResult, PublishedPost.generation_result_id == GenerationResult.id)
-        .join(Generation, GenerationResult.generation_id == Generation.id)
+        .outerjoin(GenerationResult, PublishedPost.generation_result_id == GenerationResult.id)
+        .outerjoin(Generation, GenerationResult.generation_id == Generation.id)
         .where(PublishedPost.slug == slug)
     )
     row = result.one_or_none()
@@ -212,8 +231,8 @@ async def rss_feed(
 ):
     result = await session.execute(
         select(PublishedPost, GenerationResult, Generation)
-        .join(GenerationResult, PublishedPost.generation_result_id == GenerationResult.id)
-        .join(Generation, GenerationResult.generation_id == Generation.id)
+        .outerjoin(GenerationResult, PublishedPost.generation_result_id == GenerationResult.id)
+        .outerjoin(Generation, GenerationResult.generation_id == Generation.id)
         .order_by(PublishedPost.published_at.desc())
         .limit(50)
     )
@@ -222,13 +241,16 @@ async def rss_feed(
     items_xml = []
     for post, gen_result, generation in rows:
         pub_date = post.published_at.strftime("%a, %d %b %Y %H:%M:%S +0000")
+        title = gen_result.channel_id if gen_result else "Personal"
+        post_date = str(generation.date) if generation else str(post.published_at.date())
+        text = gen_result.text if gen_result else (post.text or "")
         items_xml.append(
             f"""    <item>
-      <title>{xml_escape(gen_result.channel_id)} - {xml_escape(str(generation.date))}</title>
+      <title>{xml_escape(title)} - {xml_escape(post_date)}</title>
       <link>http://192.168.31.131:3000/post/{xml_escape(post.slug)}</link>
       <guid isPermaLink="false">{post.id}</guid>
       <pubDate>{pub_date}</pubDate>
-      <description>{xml_escape(gen_result.text[:500])}</description>
+      <description>{xml_escape(text[:500])}</description>
     </item>"""
         )
 

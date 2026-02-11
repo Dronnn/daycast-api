@@ -22,6 +22,12 @@ Generate one text for EACH of the following channels:
 6. If the input is in a different language than the target, translate naturally.
 7. Return ONLY valid JSON — no markdown fences, no extra text.
 
+### Style-specific rules
+- **list_numbered**: Output ONLY a numbered list of facts/events. No introductions, conclusions, or decorative text. Each item is one sentence. Format: "1. ...\n2. ...\n3. ..."
+- **list_bulleted**: Output ONLY a bulleted list of facts/events. No introductions, conclusions, or decorative text. Each item is one sentence. Format: "• ...\n• ...\n• ..."
+
+{extra_instructions}
+
 ## Required JSON response format
 
 ```json

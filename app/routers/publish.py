@@ -12,6 +12,7 @@ from app.models.generation_result import GenerationResult
 from app.models.input_item import InputItem
 from app.models.published_post import PublishedPost
 from app.schemas.publish import (
+    PublishInputRequest,
     PublishRequest,
     PublishedPostResponse,
     PublishStatusResponse,
@@ -22,23 +23,40 @@ router = APIRouter(prefix="/publish", tags=["publish"])
 
 def _build_response(
     post: PublishedPost,
-    result: GenerationResult,
-    generation: Generation,
+    result: GenerationResult | None,
+    generation: Generation | None,
     input_items: list[InputItem],
+    source_item: InputItem | None = None,
 ) -> PublishedPostResponse:
+    if source_item:
+        # Published from InputItem directly
+        return PublishedPostResponse(
+            id=post.id,
+            slug=post.slug,
+            channel_id=None,
+            style=None,
+            language=None,
+            text=post.text or source_item.content,
+            date=source_item.date,
+            published_at=post.published_at,
+            input_items_preview=[],
+            source="input",
+        )
+    # Published from GenerationResult
     preview = [
         item.content[:80] for item in input_items[:5] if not item.cleared
     ]
     return PublishedPostResponse(
         id=post.id,
         slug=post.slug,
-        channel_id=result.channel_id,
-        style=result.style,
-        language=result.language,
-        text=result.text,
-        date=generation.date,
+        channel_id=result.channel_id if result else None,
+        style=result.style if result else None,
+        language=result.language if result else None,
+        text=result.text if result else (post.text or ""),
+        date=generation.date if generation else post.published_at.date(),
         published_at=post.published_at,
         input_items_preview=preview,
+        source="generation",
     )
 
 
@@ -103,6 +121,47 @@ async def publish_post(
     return _build_response(post, gen_result, generation, list(input_items))
 
 
+@router.post("/input", response_model=PublishedPostResponse, status_code=201)
+async def publish_input_item(
+    body: PublishInputRequest,
+    client_id: uuid.UUID = Depends(get_client_id),
+    session: AsyncSession = Depends(get_session),
+):
+    # Validate item belongs to current user
+    result = await session.execute(
+        select(InputItem).where(
+            InputItem.id == body.input_item_id,
+            InputItem.client_id == client_id,
+        )
+    )
+    item = result.scalar_one_or_none()
+    if item is None:
+        raise HTTPException(status_code=404, detail="Input item not found")
+
+    # Check not already published
+    existing = await session.execute(
+        select(PublishedPost).where(
+            PublishedPost.input_item_id == body.input_item_id
+        )
+    )
+    if existing.scalar_one_or_none() is not None:
+        raise HTTPException(status_code=409, detail="Already published")
+
+    slug = f"{item.date}-input-{uuid.uuid4().hex[:6]}"
+
+    post = PublishedPost(
+        input_item_id=body.input_item_id,
+        client_id=client_id,
+        slug=slug,
+        text=item.content,
+    )
+    session.add(post)
+    await session.commit()
+    await session.refresh(post)
+
+    return _build_response(post, None, None, [], source_item=item)
+
+
 @router.delete("/{post_id}", status_code=204)
 async def unpublish_post(
     post_id: uuid.UUID,
@@ -121,6 +180,27 @@ async def unpublish_post(
 
     await session.delete(post)
     await session.commit()
+
+
+@router.get("/input-status", response_model=PublishStatusResponse)
+async def get_input_publish_status(
+    input_ids: str,
+    client_id: uuid.UUID = Depends(get_client_id),
+    session: AsyncSession = Depends(get_session),
+):
+    ids = [uuid.UUID(rid.strip()) for rid in input_ids.split(",") if rid.strip()]
+
+    result = await session.execute(
+        select(PublishedPost).where(
+            PublishedPost.input_item_id.in_(ids),
+            PublishedPost.client_id == client_id,
+        )
+    )
+    posts = result.scalars().all()
+    post_map = {str(p.input_item_id): str(p.id) for p in posts}
+
+    statuses = {str(rid): post_map.get(str(rid)) for rid in ids}
+    return PublishStatusResponse(statuses=statuses)
 
 
 @router.get("/status", response_model=PublishStatusResponse)

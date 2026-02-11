@@ -43,6 +43,8 @@ async def create_input_item(
         content=body.content,
         extracted_text=extracted_text,
         extract_error=extract_error,
+        importance=body.importance,
+        include_in_generation=body.include_in_generation,
     )
     session.add(item)
     await session.commit()
@@ -131,13 +133,18 @@ async def update_input_item(
     item = result.scalar_one_or_none()
     if item is None:
         raise HTTPException(status_code=404, detail="Item not found")
-    # Save old content to edit history
-    edit = InputItemEdit(
-        item_id=item.id,
-        old_content=item.content,
-    )
-    session.add(edit)
-    item.content = body.content
+    # Save old content to edit history if content changed
+    if body.content is not None and body.content != item.content:
+        edit = InputItemEdit(
+            item_id=item.id,
+            old_content=item.content,
+        )
+        session.add(edit)
+        item.content = body.content
+    if body.importance is not None:
+        item.importance = body.importance
+    if body.include_in_generation is not None:
+        item.include_in_generation = body.include_in_generation
     await session.commit()
     await session.refresh(item)
     return item
@@ -160,6 +167,37 @@ async def delete_input_item(
     # Soft-delete: mark as cleared instead of removing from DB
     item.cleared = True
     await session.commit()
+
+
+@router.get("/export")
+async def export_day(
+    date: dt.date = Query(...),
+    format: str = Query(default="plain"),
+    client_id: uuid.UUID = Depends(get_client_id),
+    session: AsyncSession = Depends(get_session),
+):
+    result = await session.execute(
+        select(InputItem)
+        .where(
+            InputItem.client_id == client_id,
+            InputItem.date == date,
+            InputItem.cleared == False,
+        )
+        .order_by(InputItem.created_at)
+    )
+    items = result.scalars().all()
+    lines = []
+    for item in items:
+        time_str = item.created_at.strftime("%H:%M")
+        if item.type == "text":
+            lines.append(f"[{time_str}] {item.content}")
+        elif item.type == "url":
+            lines.append(f"[{time_str}] {item.content}")
+            if item.extracted_text:
+                lines.append(f"  > {item.extracted_text[:200]}")
+        elif item.type == "image":
+            lines.append(f"[{time_str}] [Image]")
+    return {"text": "\n".join(lines), "date": str(date), "count": len(items)}
 
 
 @router.delete("", status_code=204)

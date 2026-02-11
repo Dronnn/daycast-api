@@ -11,6 +11,7 @@ from app.dependencies import get_client_id
 from app.models.channel_setting import ChannelSetting
 from app.models.generation import Generation
 from app.models.generation_result import GenerationResult
+from app.models.generation_settings import GenerationSettings
 from app.models.input_item import InputItem
 from app.schemas.generation import GenerateRequest, GenerationResponse, RegenerateRequest
 from app.services.ai import generate, regenerate as ai_regenerate
@@ -27,13 +28,14 @@ async def create_generation(
     client_id: uuid.UUID = Depends(get_client_id),
     session: AsyncSession = Depends(get_session),
 ):
-    # 1. Load input items for the date (exclude cleared/deleted)
+    # 1. Load input items for the date (exclude cleared and excluded from generation)
     result = await session.execute(
         select(InputItem)
         .where(
             InputItem.client_id == client_id,
             InputItem.date == body.date,
             InputItem.cleared == False,
+            InputItem.include_in_generation == True,
         )
         .order_by(InputItem.created_at)
     )
@@ -78,7 +80,13 @@ async def create_generation(
         for ch_id, cs in cs_map.items()
     }
 
-    # 4. Serialize items for AI service
+    # 4. Load generation settings
+    gs_result = await session.execute(
+        select(GenerationSettings).where(GenerationSettings.client_id == client_id)
+    )
+    gen_settings = gs_result.scalar_one_or_none()
+
+    # 5. Serialize items for AI service
     items_data = [
         {
             "type": item.type,
@@ -88,7 +96,7 @@ async def create_generation(
         for item in items
     ]
 
-    # 5. Call AI
+    # 6. Call AI
     try:
         ai_results, model_used, latency_ms = await generate(
             items=items_data,
@@ -96,6 +104,8 @@ async def create_generation(
             style_override=body.style_override,
             language_override=body.language_override,
             channel_settings=channel_settings,
+            custom_instruction=gen_settings.custom_instruction if gen_settings else None,
+            separate_business_personal=gen_settings.separate_business_personal if gen_settings else False,
         )
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=502, detail="AI provider error") from e
@@ -161,13 +171,14 @@ async def regenerate_generation(
     if original is None:
         raise HTTPException(status_code=404, detail="Generation not found")
 
-    # 2. Load input items for the same date (exclude cleared/deleted)
+    # 2. Load input items for the same date (exclude cleared and excluded from generation)
     items_result = await session.execute(
         select(InputItem)
         .where(
             InputItem.client_id == client_id,
             InputItem.date == original.date,
             InputItem.cleared == False,
+            InputItem.include_in_generation == True,
         )
         .order_by(InputItem.created_at)
     )
@@ -199,7 +210,13 @@ async def regenerate_generation(
         for ch_id, cs in cs_map.items()
     }
 
-    # 5. Serialize
+    # 5. Load generation settings
+    gs_result = await session.execute(
+        select(GenerationSettings).where(GenerationSettings.client_id == client_id)
+    )
+    gen_settings = gs_result.scalar_one_or_none()
+
+    # 6. Serialize
     items_data = [
         {
             "type": item.type,
@@ -214,7 +231,7 @@ async def regenerate_generation(
         if r.channel_id in channel_ids
     ]
 
-    # 6. Call AI
+    # 7. Call AI
     try:
         ai_results, model_used, latency_ms = await ai_regenerate(
             items=items_data,
@@ -223,6 +240,8 @@ async def regenerate_generation(
             style_override=None,
             language_override=None,
             channel_settings=channel_settings,
+            custom_instruction=gen_settings.custom_instruction if gen_settings else None,
+            separate_business_personal=gen_settings.separate_business_personal if gen_settings else False,
         )
     except httpx.HTTPStatusError as e:
         raise HTTPException(status_code=502, detail="AI provider error") from e

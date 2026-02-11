@@ -29,6 +29,8 @@ styles:
   - casual
   - funny
   - serious
+  - list_numbered
+  - list_bulleted
 
 lengths:
   brief:

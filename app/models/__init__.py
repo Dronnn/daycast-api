@@ -13,3 +13,4 @@ from app.models.generation_result import GenerationResult  # noqa: E402, F401
 from app.models.channel_setting import ChannelSetting  # noqa: E402, F401
 from app.models.user import User  # noqa: E402, F401
 from app.models.published_post import PublishedPost  # noqa: E402, F401
+from app.models.generation_settings import GenerationSettings  # noqa: E402, F401

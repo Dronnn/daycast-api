@@ -72,20 +72,49 @@ def _build_channels_block(
     return "\n".join(parts)
 
 
+def _build_extra_instructions(
+    custom_instruction: str | None = None,
+    separate_business_personal: bool = False,
+) -> str:
+    """Build extra instruction blocks for the prompt."""
+    parts = []
+    if separate_business_personal:
+        parts.append(
+            "### Business/Personal separation\n"
+            "Split events into two clearly labeled sections: "
+            "'**Деловое**' (Business) and '**Личное**' (Personal). "
+            "If unsure about a category, classify as Personal. "
+            "Do not invent categories beyond these two."
+        )
+    if custom_instruction:
+        parts.append(
+            f"### User's custom instruction\n{custom_instruction}"
+        )
+    return "\n\n".join(parts)
+
+
 def _build_messages(
     items: list[dict],
     channel_ids: list[str],
     style_override: str | None,
     language_override: str | None,
     channel_settings: dict[str, dict],
+    custom_instruction: str | None = None,
+    separate_business_personal: bool = False,
 ) -> list[dict]:
     """Build OpenAI messages array, including vision for images."""
     items_block = _build_items_block(items)
     channels_block = _build_channels_block(
         channel_ids, style_override, language_override, channel_settings
     )
-    prompt_text = PROMPT_TEMPLATE.replace("{items_block}", items_block).replace(
-        "{channels_block}", channels_block
+    extra_instructions = _build_extra_instructions(
+        custom_instruction, separate_business_personal
+    )
+    prompt_text = (
+        PROMPT_TEMPLATE
+        .replace("{items_block}", items_block)
+        .replace("{channels_block}", channels_block)
+        .replace("{extra_instructions}", extra_instructions)
     )
 
     # Build content parts — text + any images (as base64 data URLs)
@@ -127,6 +156,8 @@ async def generate(
     style_override: str | None,
     language_override: str | None,
     channel_settings: dict[str, dict],
+    custom_instruction: str | None = None,
+    separate_business_personal: bool = False,
 ) -> tuple[list[dict], str, int]:
     """Call OpenAI and return (results, model_used, latency_ms).
 
@@ -134,7 +165,8 @@ async def generate(
     """
     ai_config = get_ai_config()
     messages = _build_messages(
-        items, channel_ids, style_override, language_override, channel_settings
+        items, channel_ids, style_override, language_override, channel_settings,
+        custom_instruction, separate_business_personal,
     )
 
     last_error = None
@@ -197,6 +229,8 @@ async def regenerate(
     style_override: str | None,
     language_override: str | None,
     channel_settings: dict[str, dict],
+    custom_instruction: str | None = None,
+    separate_business_personal: bool = False,
 ) -> tuple[list[dict], str, int]:
     """Call OpenAI for regeneration and return (results, model_used, latency_ms)."""
     ai_config = get_ai_config()
@@ -205,12 +239,16 @@ async def regenerate(
         channel_ids, style_override, language_override, channel_settings
     )
     previous_block = _build_previous_block(previous_results)
+    extra_instructions = _build_extra_instructions(
+        custom_instruction, separate_business_personal
+    )
 
     prompt_text = (
         REGENERATE_TEMPLATE
         .replace("{items_block}", items_block)
         .replace("{channels_block}", channels_block)
         .replace("{previous_block}", previous_block)
+        .replace("{extra_instructions}", extra_instructions)
     )
 
     content_parts: list[dict] = [{"type": "text", "text": prompt_text}]

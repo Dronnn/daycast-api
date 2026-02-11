@@ -1,5 +1,18 @@
 # Changelog
 
+## Step 10 — Batch 2: Input Control, Generation Settings, Direct Publishing (2026-02-11)
+
+- **Input importance**: 1–5 star rating on input items (`importance` column). Filter/prioritize items for generation.
+- **Include/exclude from generation**: `include_in_generation` boolean flag on input items. Excluded items are skipped by AI generation but remain visible in feed.
+- **Generation settings**: new `generation_settings` table (per-client). Custom AI instruction text and "separate business & personal" toggle. Settings passed to AI prompts during generation.
+- **Publish input items directly**: publish raw input items (not just generation results) to the public blog. New endpoint `POST /publish/input`, `GET /publish/input-status`. Published input posts have `source: "input"`, nullable `channel_id`/`style`/`language`.
+- **Export day**: `GET /inputs/export?date=YYYY-MM-DD&format=plain` — export all day's items as plain text with timestamps.
+- **New styles**: `list_numbered` and `list_bulleted` added to style options.
+- **Updated input CRUD**: `PUT /inputs/{id}` now supports partial updates (importance, include_in_generation without changing content). Edit history only saved when content actually changes.
+- **Generation settings endpoints**: `GET /settings/generation`, `POST /settings/generation`.
+- **Migration 008**: adds `importance`, `include_in_generation` to `input_items`; creates `generation_settings` table; adds `input_item_id`, `text` to `published_posts`; makes `generation_result_id` nullable.
+- **Public API updates**: public post responses now include `source` field; input-based posts served correctly.
+
 ## Step 9 — Publishing & Public API (2026-02-10)
 
 - **Published posts model**: `published_posts` table (id UUID, generation_result_id FK, client_id FK, slug UNIQUE, published_at). Migration 007 with DESC index on `published_at`.

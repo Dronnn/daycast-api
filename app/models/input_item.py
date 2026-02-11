@@ -3,7 +3,7 @@ from datetime import date, datetime
 
 from typing import Optional
 
-from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Index, String, Text, func
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Index, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -34,6 +34,10 @@ class InputItem(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
     cleared: Mapped[bool] = mapped_column(Boolean, server_default="false", default=False)
+    importance: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    include_in_generation: Mapped[bool] = mapped_column(
+        Boolean, server_default="true", default=True
+    )
 
     client: Mapped["Client"] = relationship(back_populates="input_items")
     edits: Mapped[list["InputItemEdit"]] = relationship(

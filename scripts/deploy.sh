@@ -19,6 +19,7 @@ echo ""
 echo "[1/5] Syncing API code..."
 rsync -az --delete \
     --exclude '.venv' \
+    --exclude 'venv' \
     --exclude '.env' \
     --exclude 'data/' \
     --exclude '__pycache__' \

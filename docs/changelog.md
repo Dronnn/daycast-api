@@ -11,6 +11,8 @@
 - **Updated input CRUD**: `PUT /inputs/{id}` now supports partial updates (importance, include_in_generation without changing content). Edit history only saved when content actually changes.
 - **Generation settings endpoints**: `GET /settings/generation`, `POST /settings/generation`.
 - **Migration 008**: adds `importance`, `include_in_generation` to `input_items`; creates `generation_settings` table; adds `input_item_id`, `text` to `published_posts`; makes `generation_result_id` nullable.
+- **Importance passed to AI**: items with star rating now include `[importance: N/5]` in the AI prompt. Prompt instructs the model to give higher-importance items more weight and prominence.
+- **Deploy fix**: added `venv` to rsync exclude list to prevent wiping production virtualenv.
 - **Public API updates**: public post responses now include `source` field; input-based posts served correctly.
 
 ## Step 9 — Publishing & Public API (2026-02-10)

@@ -18,7 +18,7 @@ Regenerate text for EACH of the following channels:
 
 ## Rules
 
-1. Use ALL input items above as source material.
+1. Use ALL input items above as source material. Items marked with [importance: N/5] should be given proportionally more weight and prominence in the output.
 2. Produce a noticeably DIFFERENT version from the previous generation.
 3. For each channel, write in the specified style and language.
 4. Respect the max_length limit for each channel (in characters).

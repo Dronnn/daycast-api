@@ -14,7 +14,7 @@ Generate one text for EACH of the following channels:
 
 ## Rules
 
-1. Use ALL input items above as source material. Synthesize, don't just concatenate.
+1. Use ALL input items above as source material. Synthesize, don't just concatenate. Items marked with [importance: N/5] should be given proportionally more weight and prominence in the output — higher importance means the item should be featured more prominently and in more detail.
 2. For each channel, write in the specified style and language.
 3. Respect the Length instruction for each channel — this controls how long/short the output should be. Stay within max_length but aim for the specified length.
 4. Respect the max_length limit for each channel (in characters).

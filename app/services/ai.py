@@ -38,13 +38,15 @@ def _build_items_block(items: list[dict]) -> str:
     """Build the items section for the prompt."""
     parts = []
     for i, item in enumerate(items, 1):
+        importance = item.get("importance")
+        star_label = f" [importance: {importance}/5]" if importance else ""
         if item["type"] == "text":
-            parts.append(f"[{i}] Text: {item['content']}")
+            parts.append(f"[{i}] Text{star_label}: {item['content']}")
         elif item["type"] == "url":
             extracted = item.get("extracted_text") or "(extraction failed)"
-            parts.append(f"[{i}] URL: {item['content']}\nExtracted content: {extracted}")
+            parts.append(f"[{i}] URL{star_label}: {item['content']}\nExtracted content: {extracted}")
         elif item["type"] == "image":
-            parts.append(f"[{i}] [Image — see attached]")
+            parts.append(f"[{i}] [Image — see attached]{star_label}")
     return "\n\n".join(parts)
 
 

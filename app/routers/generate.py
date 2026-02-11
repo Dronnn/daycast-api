@@ -92,6 +92,7 @@ async def create_generation(
             "type": item.type,
             "content": item.content,
             "extracted_text": item.extracted_text,
+            "importance": item.importance,
         }
         for item in items
     ]
@@ -222,6 +223,7 @@ async def regenerate_generation(
             "type": item.type,
             "content": item.content,
             "extracted_text": item.extracted_text,
+            "importance": item.importance,
         }
         for item in items
     ]

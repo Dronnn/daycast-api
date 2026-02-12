@@ -1,5 +1,15 @@
 # Changelog
 
+## Step 12 — Full Offline Mode (2026-02-12)
+
+- **iOS: offline input CRUD** — add/edit/delete input items, change importance, toggle include/exclude from generation, adjust channel settings without network connectivity.
+- **Image caching**: `ImageCacheService` actor with 2-layer cache (memory + disk). SHA256-hashed filenames, 20-day auto-eviction policy.
+- **Cache-first image loading**: `AuthenticatedImageView` enhanced — loads from cache first, shows pending upload status for locally-modified images.
+- **Sync queue**: `SyncService` manages offline changes with "updateFields" operation type for partial updates and intelligent payload merging.
+- **Conflict resolution**: last-write-wins by `updatedAt` timestamp. Server changes always respected; client changes queued.
+- **Sync protection**: `CacheService` prevents overwriting items with pending sync operations. Ensures consistency during reconnection.
+- **History detail**: replaced `AsyncImage` with `AuthenticatedImageView` for offline-capable image display.
+
 ## Step 11 — Flame Rating & Default Importance (2026-02-12)
 
 - **Default importance = 5**: new inputs now default to importance 5 (maximum) instead of 0/null. Ensures every item starts at highest priority.

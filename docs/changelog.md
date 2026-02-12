@@ -1,5 +1,11 @@
 # Changelog
 
+## Step 11 — Flame Rating & Default Importance (2026-02-12)
+
+- **Default importance = 5**: new inputs now default to importance 5 (maximum) instead of 0/null. Ensures every item starts at highest priority.
+- **Flame rating replaces stars**: star rating UI replaced with progressive-size flame icons (5 levels). Web uses flame icons in Feed. iOS uses `FlameRatingView` (replaces `StarRatingView`).
+- **iOS: flames on image items**: flame rating now visible on image input items too (previously only shown on text/URL items).
+
 ## Step 10 — Batch 2: Input Control, Generation Settings, Direct Publishing (2026-02-11)
 
 - **Input importance**: 1–5 star rating on input items (`importance` column). Filter/prioritize items for generation.

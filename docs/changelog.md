@@ -1,5 +1,16 @@
 # Changelog
 
+## Step 15 — Pub Site Design V2 Sync (2026-02-14)
+
+- **Design sync**: daycast-pub visual language now matches daycast-web Design V2 (Apple Premium + Futuristic + Warm).
+- **CSS tokens**: full replacement of globals.css — all color, shadow, radius, glow, transition, and font tokens synced from web.
+- **Glassmorphism header**: semi-transparent surface with saturate(180%) blur(20px) backdrop-filter, gradient-brand logo.
+- **Gradient mesh background**: animated radial gradients (blue, purple, orange) with 20s shift + 30s hue-rotate.
+- **Post cards**: glow border effects (`--glow-card`/`--glow-card-hover`), spring entrance animations via Framer Motion.
+- **Framer Motion**: added for spring physics animations on card entrance, hero section, filter pills, logo hover.
+- **Dark mode**: full dark mode token set synced with web admin (enhanced shadows, glow effects).
+- **Components updated**: Layout, PostCard, Feed, ChannelFilter, Calendar, Post, Archive, Footer, ChannelIcon.
+
 ## Step 14 — iOS Edit History in FeedView (2026-02-14)
 
 - **Backend: edits in `/inputs` response** — `GET /inputs`, `GET /inputs/{id}`, `PUT /inputs/{id}` now return `InputItemWithEditsResponse` with eager-loaded edits via `selectinload`. Matches `/days/{date}` behavior.

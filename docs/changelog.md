@@ -1,5 +1,15 @@
 # Changelog
 
+## Step 13 — Web Design V2: Apple Premium Redesign (2026-02-14)
+
+- **Design V2 overhaul**: complete visual redesign — Apple premium + futuristic + warm combination. Gradient mesh animated backgrounds, glassmorphism navbar, glow effects on cards, spring physics on all interactions.
+- **Framer Motion**: added for page transitions (fade + slide), scroll-triggered reveals, spring hover/tap, AnimatePresence for modals and panels.
+- **Color system**: precise dark/light mode with warm cream tones (light) and deep blacks with glowing accents (dark). Gradient brand accent: blue → purple.
+- **Typography**: SF Pro Display for headings (36-64px), Inter for body. Removed Plus Jakarta Sans.
+- **Responsive**: three breakpoints (768px, 480px, 375px). 44px touch targets, 16px input fonts (prevents iOS Safari zoom), flex-wrap on all horizontal layouts.
+- **Edit history popover**: view edit history via right-click (desktop) or long-press 500ms (mobile). Glassmorphism popover with spring animation. Replaces inline expand/collapse.
+- **AI model**: updated to `gpt-5.2` with new API key.
+
 ## Step 12 — Full Offline Mode (2026-02-12)
 
 - **iOS: offline input CRUD** — add/edit/delete input items, change importance, toggle include/exclude from generation, adjust channel settings without network connectivity.

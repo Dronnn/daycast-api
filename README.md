@@ -7,7 +7,7 @@ Built with Python 3.12, FastAPI, SQLAlchemy 2.0, and PostgreSQL.
 ## Features
 
 - **Input items** — CRUD for text, URLs, and images. URLs are auto-extracted via trafilatura. Images stored on disk. Star importance rating (1–5). Include/exclude from AI generation toggle.
-- **AI generation** — sends all day's inputs to OpenAI GPT-5.1 and produces formatted text per channel. Custom AI instructions and business/personal separation via generation settings.
+- **AI generation** — sends all day's inputs to OpenAI GPT-5.2 and produces formatted text per channel. Custom AI instructions and business/personal separation via generation settings.
 - **5 channels** — Blog, Diary, Telegram Personal, Telegram Public, Twitter/X. Each with configurable style, language, and length.
 - **10 styles** — concise, detailed, structured, plan, advisory, casual, funny, serious, list_numbered, list_bulleted.
 - **5 lengths** — brief, short, medium, detailed, full.

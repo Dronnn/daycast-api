@@ -4,6 +4,7 @@ import datetime as dt
 from fastapi import APIRouter, Depends, Form, HTTPException, Query, UploadFile
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.database import get_session
 from app.dependencies import get_client_id
@@ -13,6 +14,7 @@ from app.schemas.input_item import (
     InputItemCreateRequest,
     InputItemResponse,
     InputItemUpdateRequest,
+    InputItemWithEditsResponse,
 )
 from app.services.file_storage import (
     ALLOWED_CONTENT_TYPES,
@@ -83,7 +85,7 @@ async def upload_image(
     return item
 
 
-@router.get("", response_model=list[InputItemResponse])
+@router.get("", response_model=list[InputItemWithEditsResponse])
 async def list_input_items(
     date: dt.date = Query(...),
     client_id: uuid.UUID = Depends(get_client_id),
@@ -96,21 +98,22 @@ async def list_input_items(
             InputItem.date == date,
             InputItem.cleared == False,
         )
+        .options(selectinload(InputItem.edits))
         .order_by(InputItem.created_at)
     )
     return result.scalars().all()
 
 
-@router.get("/{item_id}", response_model=InputItemResponse)
+@router.get("/{item_id}", response_model=InputItemWithEditsResponse)
 async def get_input_item(
     item_id: uuid.UUID,
     client_id: uuid.UUID = Depends(get_client_id),
     session: AsyncSession = Depends(get_session),
 ):
     result = await session.execute(
-        select(InputItem).where(
-            InputItem.id == item_id, InputItem.client_id == client_id
-        )
+        select(InputItem)
+        .where(InputItem.id == item_id, InputItem.client_id == client_id)
+        .options(selectinload(InputItem.edits))
     )
     item = result.scalar_one_or_none()
     if item is None:
@@ -118,7 +121,7 @@ async def get_input_item(
     return item
 
 
-@router.put("/{item_id}", response_model=InputItemResponse)
+@router.put("/{item_id}", response_model=InputItemWithEditsResponse)
 async def update_input_item(
     item_id: uuid.UUID,
     body: InputItemUpdateRequest,
@@ -146,7 +149,13 @@ async def update_input_item(
     if body.include_in_generation is not None:
         item.include_in_generation = body.include_in_generation
     await session.commit()
-    await session.refresh(item)
+    # Re-query with selectinload to get fresh edits
+    result = await session.execute(
+        select(InputItem)
+        .where(InputItem.id == item_id)
+        .options(selectinload(InputItem.edits))
+    )
+    item = result.scalar_one()
     return item
 
 

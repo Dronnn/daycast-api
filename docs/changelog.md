@@ -1,5 +1,11 @@
 # Changelog
 
+## Step 14 — iOS Edit History in FeedView (2026-02-14)
+
+- **Backend: edits in `/inputs` response** — `GET /inputs`, `GET /inputs/{id}`, `PUT /inputs/{id}` now return `InputItemWithEditsResponse` with eager-loaded edits via `selectinload`. Matches `/days/{date}` behavior.
+- **iOS: Edit History sheet** — new `EditHistorySheet` with word-level diff (reuses `computeWordDiff`/`buildDiffText`), "Previous Versions" section header with count badge, presentation detents (medium/large), drag indicator.
+- **iOS: Context menu trigger** — long-press on feed items now shows "Edit History (N)" option (with `clock.arrow.circlepath` icon) when edits exist. Opens the same sheet. All existing context menu items preserved.
+
 ## Step 13 — Web Design V2: Apple Premium Redesign (2026-02-14)
 
 - **Design V2 overhaul**: complete visual redesign — Apple premium + futuristic + warm combination. Gradient mesh animated backgrounds, glassmorphism navbar, glow effects on cards, spring physics on all interactions.

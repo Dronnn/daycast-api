@@ -92,7 +92,7 @@ daycast-api/
 ├── alembic/                 # Database migrations (001–007)
 ├── config/product.yml       # Channels, styles, languages, lengths, limits, AI config
 ├── prompts/                 # AI prompt templates (generate, regenerate)
-├── infra/                   # Caddyfile, launchd plists, backup scripts
+├── infra/                   # Caddyfile, launchd plists (API, tunnel, backup), backup scripts
 ├── scripts/                 # setup-mac.sh, deploy.sh
 ├── tests/                   # pytest tests
 ├── docs/                    # deploy.md, changelog.md
@@ -147,9 +147,24 @@ make deploy-mac
 
 The production Mac (192.168.31.131) runs everything natively — no Docker:
 - PostgreSQL 16 via Homebrew
-- Python 3.12 venv with uvicorn
+- Python 3.12 venv with uvicorn (bound to `127.0.0.1:8000`)
 - Static web files served by the API directly
-- launchd for auto-start, daily backups at 3 AM
+- Cloudflare Tunnel for public HTTPS access
+- launchd for auto-start (API, tunnel, daily backups at 3 AM)
+
+### Cloudflare Tunnel
+
+Public access is provided via Cloudflare Tunnel (`daycast`, UUID `c53492f3-4089-4145-9cd2-7cb085348c4c`):
+
+| Public URL | Target |
+|------------|--------|
+| `https://daycast.mrmaier.com` | Web SPA + API (Uvicorn on `127.0.0.1:8000`) |
+| `https://pubdaycast.mrmaier.com` | Public blog (`serve` on `localhost:3000`) |
+
+- Tunnel config: `~/.cloudflared/config.yml` on macbook-i7
+- Tunnel credentials: `~/.cloudflared/c53492f3-4089-4145-9cd2-7cb085348c4c.json`
+- launchd service: `com.daycast.tunnel` (plist in `infra/launchd/`)
+- Uvicorn binds to `127.0.0.1` (not `0.0.0.0`) — only accessible via tunnel, not directly from LAN
 
 ## Makefile Commands
 

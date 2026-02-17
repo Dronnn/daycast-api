@@ -1,5 +1,13 @@
 # Changelog
 
+## Cloudflare Tunnel + Security Hardening (2026-02-17)
+
+- **Cloudflare Tunnel**: set up tunnel `daycast` (UUID `c53492f3-4089-4145-9cd2-7cb085348c4c`) on macbook-i7 to expose services publicly via HTTPS.
+- **Public URLs**: `daycast.mrmaier.com` → Web SPA + API (port 8000), `pubdaycast.mrmaier.com` → Pub blog (port 3000).
+- **Security hardening**: Uvicorn now binds to `127.0.0.1` instead of `0.0.0.0` — API only accessible via tunnel, not directly from LAN.
+- **Tunnel launchd service**: new `com.daycast.tunnel` plist (`infra/launchd/com.daycast.tunnel.plist`) for auto-start on boot.
+- **Pub site production URL**: added `.env.production` with `VITE_API_URL=https://daycast.mrmaier.com` and rebuilt pub site.
+
 ## Step 15 — Pub Site Design V2 Sync (2026-02-14)
 
 - **Design sync**: daycast-pub visual language now matches daycast-web Design V2 (Apple Premium + Futuristic + Warm).
